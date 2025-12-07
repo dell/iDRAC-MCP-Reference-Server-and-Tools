@@ -1,0 +1,126 @@
+# Agentic Integration Test Configuration
+
+# MCP Server Profile
+# Selects which MCP server context to use from prompts_config.yaml
+# Options: idrac, generic (add more profiles in prompts_config.yaml)
+mcp_profile: "idrac"
+
+
+# LLM Configuration
+llm:
+  # Choose provider: ollama, dev_genai
+  provider: "dev_genai"  # Default to dev_genai
+
+  ollama:
+    model: "llama3.2:3b"  # Fast, small model for testing
+    base_url: "http://localhost:11434"
+    temperature: 0
+
+  dev_genai:
+    model: "gpt-oss-120b"
+    # URL and API key can be set via environment variables:
+    # DEV_GENAI_API_URL and DEV_GENAI_API_KEY
+    # Or uncomment and set them here:
+    # base_url: "https://your-dev-genai-url.com/v1"
+    # api_key: "your-api-key"
+    temperature: 0.7
+    max_tokens: 64000  # Enhanced context size for oss-gpt 
+
+# Test Execution Settings
+test_execution:
+  # Run each test multiple times to verify consistency
+  consistency_runs: 1  # Increase to 3 for important tests
+
+  # Timeout per test (seconds)
+  timeout: 60
+
+  # Retry failed tests
+  max_retries: 1
+
+  # Log intermediate agent steps
+  verbose: true
+
+  # Save agent traces for debugging
+  save_traces: true
+  trace_dir: "./traces"
+
+# Test Tiers (for gradual rollout)
+tiers:
+  tier1:
+    description: "Fast smoke tests - run frequently"
+    models: ["ollama"]
+    scenarios: ["smoke", "single_tool"]
+
+# Agent Configuration
+agent:
+  # Agent type: react, openai_functions, structured_chat
+  type: "react"
+
+  # Maximum iterations before giving up
+  max_iterations: 10
+
+  # Maximum execution time (seconds)
+  # Increased to account for tool execution time + RAG search
+  max_execution_time: 90
+
+  # Handle parsing errors (agent will continue even if LLM output is malformed)
+  handle_parsing_errors: true
+
+# RAG (Retrieval Augmented Generation) Configuration
+rag:
+  enabled: true
+  pdf_folder: "./data/pdfs"
+  persist_directory: "./data/chroma_db"
+
+  # Text chunking
+  chunk_size: 1500
+  chunk_overlap: 300
+
+  # Embeddings
+  embedding_model: "all-mpnet-base-v2"  # HuggingFace model
+
+  # Vector store
+  collection_name: "idrac_documents"
+
+  # Retrieval settings
+  retriever_k: 8  # Number of chunks to retrieve
+  retriever_fetch_k: 16  # Candidates before MMR filtering
+
+# Monitoring & Reporting
+monitoring:
+  enabled: true
+  log_tool_calls: true
+
+  # LLM Request Logging
+  # true = log full prompts and responses
+  # false = log summaries/previews only (first 200 chars)
+  log_llm_requests: true
+
+  # Cost tracking (requires tiktoken)
+  track_costs: false
+
+  # Generate test report
+  generate_report: true
+  report_format: "markdown"  # markdown, json, html
+
+# Test Scenarios Configuration
+scenarios:
+  smoke_tests:
+    enabled: true
+    critical: true  # Must pass
+
+  single_tool_execution:
+    enabled: true
+    critical: true
+
+  multi_step_workflows:
+    enabled: true
+    critical: false
+
+  error_recovery:
+    enabled: true
+    critical: false
+
+  tool_description_validation:
+    enabled: false  # Advanced, enable later
+    critical: false

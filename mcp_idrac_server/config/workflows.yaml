@@ -1,0 +1,333 @@
+# Dell iDRAC Redfish API - Custom Workflow Definitions
+# This file defines composite workflows that orchestrate multiple tool calls
+
+version: "1.0"
+
+workflows:
+  # ===========================================================================
+  # System Health Diagnostics
+  # ===========================================================================
+
+  - name: diagnose_system_health
+    description: Comprehensive system health check including hardware status, memory, processors, and event logs
+    category: diagnostics
+    enabled: true
+
+    inputs:
+      - name: system_id
+        type: string
+        description: System ID to diagnose
+        required: true
+        default: "System.Embedded.1"
+
+      - name: include_logs
+        type: boolean
+        description: Include system event logs in diagnosis
+        required: false
+        default: true
+
+    steps:
+      - name: get_system_info
+        tool: get_system_info
+        description: Retrieve basic system information and health status
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          system_data: "$"
+          health_status: "$.Status.Health"
+          power_state: "$.PowerState"
+        on_error: fail
+
+      - name: get_memory
+        tool: get_memory_info
+        description: Check memory module health and capacity
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          memory_summary: "$.Members@odata.count"
+          memory_data: "$.Members"
+        on_error: continue
+
+      - name: get_processors
+        tool: get_processor_info
+        description: Check processor information and status
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          processor_count: "$.Members@odata.count"
+          processor_data: "$.Members"
+        on_error: continue
+
+      - name: get_event_logs
+        tool: get_system_event_log
+        description: Retrieve recent system event logs
+        condition: ${{inputs.include_logs}} == true
+        parameters:
+          manager_id: "iDRAC.Embedded.1"
+        outputs:
+          log_entries: "$.Members"
+        on_error: continue
+
+    output:
+      workflow_name: "System Health Diagnosis"
+      system_id: ${{inputs.system_id}}
+      timestamp: ${{workflow.timestamp}}
+      summary:
+        health: ${{steps.get_system_info.health_status}}
+        power_state: ${{steps.get_system_info.power_state}}
+        memory_modules: ${{steps.get_memory.memory_summary}}
+        processors: ${{steps.get_processors.processor_count}}
+      details:
+        system: ${{steps.get_system_info.system_data}}
+        memory: ${{steps.get_memory.memory_data}}
+        processors: ${{steps.get_processors.processor_data}}
+        event_logs: ${{steps.get_event_logs.log_entries}}
+
+  # ===========================================================================
+  # Complete Inventory Collection
+  # ===========================================================================
+
+  - name: collect_full_inventory
+    description: Collect comprehensive hardware inventory including system, memory, processors, storage, and network
+    category: inventory
+    enabled: true
+
+    inputs:
+      - name: system_id
+        type: string
+        description: System ID to inventory
+        required: true
+        default: "System.Embedded.1"
+
+    steps:
+      - name: get_system
+        tool: get_system_info
+        description: Get system information
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          system: "$"
+
+      - name: get_memory
+        tool: get_memory_info
+        description: Get memory information
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          memory: "$"
+
+      - name: get_processors
+        tool: get_processor_info
+        description: Get processor information
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          processors: "$"
+
+      - name: get_storage
+        tool: get_storage_info
+        description: Get storage controller information
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          storage: "$"
+        on_error: continue
+
+      - name: get_network
+        tool: get_network_interfaces
+        description: Get network interface information
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          network: "$"
+        on_error: continue
+
+    output:
+      inventory_report:
+        collected_at: ${{workflow.timestamp}}
+        system_id: ${{inputs.system_id}}
+        system_info: ${{steps.get_system.system}}
+        memory: ${{steps.get_memory.memory}}
+        processors: ${{steps.get_processors.processors}}
+        storage: ${{steps.get_storage.storage}}
+        network: ${{steps.get_network.network}}
+
+  # ===========================================================================
+  # BIOS Configuration Backup
+  # ===========================================================================
+
+  - name: backup_bios_config
+    description: Backup current BIOS settings including active and pending configurations
+    category: configuration
+    enabled: true
+
+    inputs:
+      - name: system_id
+        type: string
+        description: System ID to backup BIOS configuration
+        required: true
+        default: "System.Embedded.1"
+
+    steps:
+      - name: get_current_bios
+        tool: get_bios_settings
+        description: Get current active BIOS settings
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          current_settings: "$.Attributes"
+          bios_version: "$.AttributeRegistry"
+
+      - name: get_pending_bios
+        tool: get_bios_pending_settings
+        description: Get pending BIOS settings (if any)
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          pending_settings: "$.Attributes"
+        on_error: continue
+
+    output:
+      bios_backup:
+        backup_timestamp: ${{workflow.timestamp}}
+        system_id: ${{inputs.system_id}}
+        bios_version: ${{steps.get_current_bios.bios_version}}
+        current_settings: ${{steps.get_current_bios.current_settings}}
+        pending_settings: ${{steps.get_pending_bios.pending_settings}}
+
+  # ===========================================================================
+  # Power Management Workflow
+  # ===========================================================================
+
+  - name: graceful_power_cycle
+    description: Perform a graceful shutdown followed by power on (requires manual confirmation between steps)
+    category: power_management
+    enabled: true
+
+    inputs:
+      - name: system_id
+        type: string
+        description: System ID to power cycle
+        required: true
+        default: "System.Embedded.1"
+
+      - name: shutdown_type
+        type: string
+        description: Type of shutdown (Graceful or Forced)
+        required: false
+        default: "Graceful"
+
+    steps:
+      - name: check_current_state
+        tool: get_system_info
+        description: Check current power state
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          current_power_state: "$.PowerState"
+
+      - name: shutdown_system
+        tool: reset_system
+        description: Shutdown the system gracefully
+        parameters:
+          system_id: ${{inputs.system_id}}
+          reset_type: ${{inputs.shutdown_type}}Shutdown
+        outputs:
+          shutdown_result: "$"
+        on_error: fail
+
+    output:
+      power_cycle_status:
+        workflow: "Graceful Power Cycle"
+        system_id: ${{inputs.system_id}}
+        original_state: ${{steps.check_current_state.current_power_state}}
+        shutdown_type: ${{inputs.shutdown_type}}
+        shutdown_result: ${{steps.shutdown_system.shutdown_result}}
+        timestamp: ${{workflow.timestamp}}
+
+  # ===========================================================================
+  # Firmware Inventory
+  # ===========================================================================
+
+  - name: collect_firmware_inventory
+    description: Collect firmware versions for all components (BIOS, iDRAC, NICs, storage, etc.)
+    category: firmware
+    enabled: true
+
+    inputs:
+      - name: system_id
+        type: string
+        description: System ID to collect firmware inventory
+        required: true
+        default: "System.Embedded.1"
+
+    steps:
+      - name: get_system
+        tool: get_system_info
+        description: Get system and BIOS version
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          bios_version: "$.BiosVersion"
+          model: "$.Model"
+
+      - name: get_update_service
+        tool: get_update_service
+        description: Get firmware update service information
+        parameters: {}
+        outputs:
+          firmware_inventory: "$.FirmwareInventory"
+        on_error: continue
+
+    output:
+      firmware_report:
+        collected_at: ${{workflow.timestamp}}
+        system_id: ${{inputs.system_id}}
+        system_model: ${{steps.get_system.model}}
+        bios_version: ${{steps.get_system.bios_version}}
+        firmware_inventory: ${{steps.get_update_service.firmware_inventory}}
+
+  # ===========================================================================
+  # Network Configuration Summary
+  # ===========================================================================
+
+  - name: get_network_summary
+    description: Get summary of network configuration including interfaces and Ethernet settings
+    category: network
+    enabled: true
+
+    inputs:
+      - name: system_id
+        type: string
+        description: System ID to query network configuration
+        required: true
+        default: "System.Embedded.1"
+
+    steps:
+      - name: list_network_interfaces
+        tool: get_network_interfaces
+        description: List all network interfaces
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          interface_count: "$.Members@odata.count"
+          interfaces: "$.Members"
+
+      - name: get_ethernet_interfaces
+        tool: get_ethernet_interfaces
+        description: Get Ethernet interface details
+        parameters:
+          system_id: ${{inputs.system_id}}
+        outputs:
+          ethernet_count: "$.Members@odata.count"
+          ethernet_interfaces: "$.Members"
+        on_error: continue
+
+    output:
+      network_summary:
+        system_id: ${{inputs.system_id}}
+        timestamp: ${{workflow.timestamp}}
+        total_interfaces: ${{steps.list_network_interfaces.interface_count}}
+        ethernet_interfaces: ${{steps.get_ethernet_interfaces.ethernet_count}}
+        interface_details: ${{steps.list_network_interfaces.interfaces}}
+        ethernet_details: ${{steps.get_ethernet_interfaces.ethernet_interfaces}}

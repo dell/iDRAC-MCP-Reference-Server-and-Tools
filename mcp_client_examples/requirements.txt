@@ -1,0 +1,10 @@
+# MCP Client Examples Dependencies
+
+# MCP Client Library
+mcp>=1.0.0
+
+# HTTP client for streamable HTTP transport
+httpx>=0.25.0
+
+# Optional: for better JSON formatting
+# python-dotenv>=1.0.0

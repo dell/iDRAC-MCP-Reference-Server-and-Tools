@@ -1,0 +1,56 @@
+# Dockerfile for Agent Orchestrator Service
+FROM python:3.11-slim
+
+LABEL maintainer="Dell iDRAC Team"
+LABEL description="LangChain ReAct Agent Orchestrator with MCP Tools & RAG"
+
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy langchain-dev-genai package if it exists
+COPY langchain-dev-genai/ ./langchain-dev-genai/
+RUN if [ -f "./langchain-dev-genai/pyproject.toml" ]; then \
+        pip install --no-cache-dir -e ./langchain-dev-genai/; \
+    fi
+
+# Copy application code
+COPY agent_orchestrator_server.py .
+COPY config/ ./config/
+COPY utils/ ./utils/
+
+# Note: data/ directory is mounted as volumes in docker-compose.yml
+# - ./data/pdfs:/app/data/pdfs:ro (for RAG PDFs)
+# - chroma-db:/data/chroma_db (for vector store)
+
+# Create directories for runtime data
+RUN mkdir -p /data/chroma_db /data/pdfs
+
+# Expose orchestrator port
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=10 \
+    CMD curl -f http://localhost:8001/health || exit 1
+
+# Use STOPSIGNAL to ensure proper signal handling
+STOPSIGNAL SIGTERM
+
+# Run orchestrator
+CMD ["python", "-u", "agent_orchestrator_server.py", "--host", "0.0.0.0", "--port", "8001"]

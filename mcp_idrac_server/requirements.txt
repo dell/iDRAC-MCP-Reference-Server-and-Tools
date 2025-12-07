@@ -1,0 +1,32 @@
+# MCP iDRAC Server Dependencies
+
+# MCP Server Framework
+fastmcp>=0.2.0
+
+# Data validation and parsing
+pydantic>=2.0.0
+pyyaml>=6.0
+
+# HTTP client for Redfish API
+requests>=2.31.0
+
+# Additional server dependencies
+python-dotenv>=1.0.0
+uvicorn>=0.24.0
+httpx>=0.25.0
+sse-starlette>=1.6.5
+
+# Workflow support
+jsonpath-ng>=1.6.0
+
+# Development dependencies (optional)
+# Uncomment for development:
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0
+# pytest-cov>=4.1.0
+# pytest-mock>=3.11.0
+# black>=23.7.0
+# ruff>=0.0.285
+# mypy>=1.5.0
+# types-PyYAML>=6.0.0
+# types-requests>=2.31.0

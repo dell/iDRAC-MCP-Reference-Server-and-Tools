@@ -1,0 +1,119 @@
+{
+  "service_root": {
+    "@odata.context": "/redfish/v1/$metadata#ServiceRoot.ServiceRoot",
+    "@odata.id": "/redfish/v1/",
+    "@odata.type": "#ServiceRoot.v1_5_0.ServiceRoot",
+    "Id": "RootService",
+    "Name": "Root Service",
+    "RedfishVersion": "1.6.0",
+    "UUID": "92384634-2938-2342-8820-489239905423",
+    "Systems": {
+      "@odata.id": "/redfish/v1/Systems"
+    },
+    "Chassis": {
+      "@odata.id": "/redfish/v1/Chassis"
+    },
+    "Managers": {
+      "@odata.id": "/redfish/v1/Managers"
+    },
+    "SessionService": {
+      "@odata.id": "/redfish/v1/SessionService"
+    },
+    "AccountService": {
+      "@odata.id": "/redfish/v1/AccountService"
+    }
+  },
+  "systems_collection": {
+    "@odata.context": "/redfish/v1/$metadata#ComputerSystemCollection.ComputerSystemCollection",
+    "@odata.id": "/redfish/v1/Systems",
+    "@odata.type": "#ComputerSystemCollection.ComputerSystemCollection",
+    "Name": "Computer System Collection",
+    "Members@odata.count": 1,
+    "Members": [
+      {
+        "@odata.id": "/redfish/v1/Systems/System.Embedded.1"
+      }
+    ]
+  },
+  "system_info": {
+    "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
+    "@odata.id": "/redfish/v1/Systems/System.Embedded.1",
+    "@odata.type": "#ComputerSystem.v1_5_0.ComputerSystem",
+    "Id": "System.Embedded.1",
+    "Name": "System",
+    "Description": "Computer System which represents a machine (physical or virtual) and the local resources such as memory, cpu and other devices that can be accessed from that machine.",
+    "SystemType": "Physical",
+    "AssetTag": "",
+    "Manufacturer": "Dell Inc.",
+    "Model": "PowerEdge R740",
+    "SKU": "1234567",
+    "SerialNumber": "MOCK123456",
+    "PartNumber": "0987654ABCD",
+    "UUID": "4c4c4544-0051-5810-8052-b2c04f545931",
+    "HostName": "mock-idrac-server",
+    "Status": {
+      "State": "Enabled",
+      "Health": "OK",
+      "HealthRollup": "OK"
+    },
+    "IndicatorLED": "Off",
+    "PowerState": "On",
+    "Boot": {
+      "BootSourceOverrideEnabled": "Disabled",
+      "BootSourceOverrideMode": "UEFI",
+      "BootSourceOverrideTarget": "None",
+      "UefiTargetBootSourceOverride": null
+    },
+    "BiosVersion": "2.8.2",
+    "ProcessorSummary": {
+      "Count": 2,
+      "Model": "Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz",
+      "Status": {
+        "State": "Enabled",
+        "Health": "OK",
+        "HealthRollup": "OK"
+      }
+    },
+    "MemorySummary": {
+      "TotalSystemMemoryGiB": 384,
+      "Status": {
+        "State": "Enabled",
+        "Health": "OK",
+        "HealthRollup": "OK"
+      }
+    },
+    "Processors": {
+      "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Processors"
+    },
+    "Memory": {
+      "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Memory"
+    },
+    "EthernetInterfaces": {
+      "@odata.id": "/redfish/v1/Systems/System.Embedded.1/EthernetInterfaces"
+    },
+    "Storage": {
+      "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Storage"
+    },
+    "Bios": {
+      "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Bios"
+    },
+    "Actions": {
+      "#ComputerSystem.Reset": {
+        "target": "/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset",
+        "ResetType@Redfish.AllowableValues": [
+          "On",
+          "ForceOff",
+          "ForceRestart",
+          "GracefulShutdown",
+          "GracefulRestart",
+          "PushPowerButton",
+          "Nmi"
+        ]
+      }
+    }
+  },
+  "reset_success": {
+    "success": true,
+    "message": "System reset operation initiated successfully"
+  }
+}

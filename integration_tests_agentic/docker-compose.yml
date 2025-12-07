@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # MCP Server - Dell iDRAC Redfish MCP Server
+  # ===========================================================================
+  mcp-server:
+    build:
+      context: ../mcp_idrac_server
+      dockerfile: Dockerfile
+    container_name: idrac-mcp-server
+    ports:
+      - "8000:8000"
+    networks:
+      - idrac-network
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../mcp_idrac_server/config:/app/config:ro
+    healthcheck:
+      # Note: Using basic check until MCP server Dockerfile is updated with proper endpoint check
+      # Proper check would be: ["CMD", "curl", "-f", "http://localhost:8000/mcp"]
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Agent Orchestrator - LangChain ReAct Agent with MCP Tools & RAG
+  # ===========================================================================
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    container_name: langchain-react-agent-orchestrator
+    ports:
+      - "8001:8001"
+    networks:
+      - idrac-network
+    environment:
+      # LLM Configuration
+      - DEV_GENAI_API_URL=${DEV_GENAI_API_URL}
+      - DEV_GENAI_API_KEY=${DEV_GENAI_API_KEY}
+
+      # MCP Server Connection
+      - MCP_SERVER_URL=http://mcp-server:8000
+
+      # Credential Database
+      - CREDENTIAL_DB_PATH=/data/credentials.db
+      - CREDENTIAL_MASTER_PASSWORD=${CREDENTIAL_MASTER_PASSWORD:-changeme-in-production}
+
+      # Python settings
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Shared credential database with chat-ui
+      - credential-db:/data
+
+      # RAG data (PDFs and vector store)
+      - ./data/pdfs:/app/data/pdfs:ro
+      - chroma-db:/app/data/chroma_db
+
+      # Config (optional: override if needed)
+      - ./config:/app/config:ro
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s  # Increased from 60s to allow for RAG initialization
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Chat UI - Streamlit Web Interface
+  # ===========================================================================
+  chat-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.chat-ui
+    container_name: chat-ui
+    ports:
+      - "8501:8501"
+    networks:
+      - idrac-network
+    environment:
+      # Orchestrator Connection
+      - ORCHESTRATOR_URL=http://orchestrator:8001
+      - ORCHESTRATOR_TIMEOUT=180
+
+      # Credential Database (shared with orchestrator)
+      - CREDENTIAL_DB_PATH=/data/credentials.db
+      - CREDENTIAL_MASTER_PASSWORD=${CREDENTIAL_MASTER_PASSWORD:-changeme-in-production}
+
+      # Streamlit settings
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    volumes:
+      # Shared credential database with orchestrator
+      - credential-db:/data
+
+      # Optional: Persist Streamlit cache
+      - streamlit-cache:/root/.streamlit
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ===========================================================================
+# Networks
+# ===========================================================================
+networks:
+  idrac-network:
+    driver: bridge
+    name: idrac-agentic-network
+
+# ===========================================================================
+# Volumes
+# ===========================================================================
+volumes:
+  # Shared credential database between orchestrator and chat-ui
+  credential-db:
+    name: idrac-credentials
+    driver: local
+
+  # ChromaDB vector store for RAG
+  chroma-db:
+    name: idrac-chroma-db
+    driver: local
+
+  # Streamlit cache
+  streamlit-cache:
+    name: idrac-streamlit-cache
+    driver: local

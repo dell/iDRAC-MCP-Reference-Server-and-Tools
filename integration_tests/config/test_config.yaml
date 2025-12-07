@@ -1,0 +1,60 @@
+# Integration Test Configuration
+# This configuration is used for integration testing
+
+version: "1.0"
+
+# Server configuration for testing
+server:
+  verify_ssl: false  # Disable SSL verification for mock server
+  timeout: 10
+  max_retries: 1
+
+# Authentication configuration
+authentication:
+  token_header: X-Auth-Token
+
+# Minimal set of tools for testing
+tools:
+  - name: get_system_info
+    description: Get detailed information about a specific system
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}
+    enabled: true
+    category: system_info
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: false
+        default: "System.Embedded.1"
+
+  - name: list_systems
+    description: List all available computer systems
+    operation_id: GET_/redfish/v1/Systems
+    enabled: true
+    category: system_info
+    parameter_mappings: []
+
+  - name: reset_system
+    description: Perform a reset operation on the system
+    operation_id: Action_Reset_/redfish/v1/Systems/{ComputerSystemId}/Actions/ComputerSystem.Reset
+    enabled: true
+    category: power_control
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        required: false
+        default: "System.Embedded.1"
+      - tool_param_name: reset_type
+        api_param_name: ResetType
+        location: body
+        description: "Type of reset (On, ForceOff, GracefulShutdown, etc.)"
+        required: true
+
+  - name: get_service_root
+    description: Get the Redfish service root
+    operation_id: GET_/redfish/v1
+    enabled: true
+    category: discovery
+    parameter_mappings: []

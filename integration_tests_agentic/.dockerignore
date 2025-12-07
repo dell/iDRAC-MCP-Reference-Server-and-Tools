@@ -1,0 +1,105 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+traces/
+logs/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+
+# Database files (will use volumes)
+*.db
+*.sqlite
+*.sqlite3
+
+# Vector store data (will use volumes)
+data/chroma_db/
+
+# Note: data/pdfs is mounted as read-only volume in docker-compose
+# We don't exclude it so it can be copied during build for non-compose deployments
+# data/pdfs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scenarios and tests (not needed in production containers)
+scenarios/
+tests/
+test_*.py
+*_test.py
+
+# Bash scripts (use Docker Compose instead)
+*.sh
+start_*.sh
+
+# Local development files
+mock_idrac_server.py

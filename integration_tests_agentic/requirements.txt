@@ -1,0 +1,60 @@
+# Agentic Integration Test Suite Requirements
+
+# Core testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-timeout>=2.1.0
+
+# LangChain ecosystem - latest versions (all must be updated together)
+langchain
+langchain-core
+langchain-community
+langchain-text-splitters
+langgraph  # Required for agent creation in latest LangChain
+
+# LLM providers (choose based on your needs)
+# Uncomment the one you want to use:
+# langchain-openai>=0.0.5        # For OpenAI models
+# langchain-anthropic>=0.0.1     # For Anthropic Claude
+# langchain-ollama>=0.0.1        # For local Ollama models
+
+# Custom dev GenAI (if using the existing orchestrator pattern)
+# Install from: ../agentic_projects/poweredge-agentic-ai/langchain-dev-genai
+# langchain-dev-genai
+
+# HTTP client and servers
+httpx>=0.25.0
+requests>=2.31.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Utilities
+pyyaml>=6.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+cryptography>=42.0.0  # For encrypted credential storage
+
+# Monitoring and reporting
+rich>=13.0.0        # For pretty console output
+tabulate>=0.9.0     # For test result tables
+
+# RAG (Retrieval Augmented Generation) dependencies
+langchain-chroma           # Vector store
+langchain-huggingface      # Embeddings
+sentence-transformers>=2.2.0      # Embedding models
+pypdf>=3.17.0                     # PDF loading
+chromadb>=0.4.0                   # Vector database
+
+# Optional: For cost tracking
+# tiktoken>=0.5.0    # Token counting
+
+# MCP Client SDK (required for connecting to MCP server)
+mcp>=1.0.0
+
+# MCP Server dependencies (only if embedding server - NOT used in this architecture)
+# fastmcp>=0.2.0
+# sse-starlette>=1.6.5
+
+# Note: This suite reuses the MCP server from ../mcp_idrac_server
+# and test utilities from ../integration_tests
+# To install all MCP dependencies: pip install -r ../mcp_idrac_server/requirements.txt

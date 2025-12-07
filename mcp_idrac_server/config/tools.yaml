@@ -1,0 +1,327 @@
+# Dell iDRAC Redfish API - Tool Configuration
+# This file defines which Redfish API operations are exposed as MCP tools
+
+version: "1.0"
+
+# Server configuration
+server:
+  # NOTE: iDRAC IP address is now provided per-request via the 'idrac_ip' parameter
+  # NOTE: Credentials (username + password/token) are provided per-request by the client
+  # No hardcoded credentials or IPs in server configuration
+  verify_ssl: false
+  timeout: 30
+  max_retries: 3
+
+# Authentication configuration
+# Credentials are provided by the client for each request
+# The server validates that username AND (password OR auth_token) are present
+authentication:
+  token_header: X-Auth-Token  # Header name for token-based authentication
+
+# Tool definitions
+tools:
+  # =============================================================================
+  # System Information Tools
+  # =============================================================================
+
+  - name: get_system_info
+    description: Get detailed information about a specific system (server)
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}
+    enabled: true
+    category: system_info
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system (e.g., 'System.Embedded.1')
+        required: true
+        default: "System.Embedded.1"
+    examples:
+      - idrac_ip: "idrac_ip"
+        system_id: "System.Embedded.1"
+        username: "idrac_username"
+        password: "idrac_password"
+
+  - name: list_systems
+    description: List all available computer systems managed by this iDRAC
+    operation_id: GET_/redfish/v1/Systems
+    enabled: true
+    category: system_info
+    parameter_mappings: []
+    examples:
+      - idrac_ip: "idrac_ip"
+        username: "idrac_username"
+        password: "idrac_password"
+
+  # =============================================================================
+  # BIOS Management Tools
+  # =============================================================================
+
+  - name: get_bios_settings
+    description: Get current BIOS configuration settings
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/Bios
+    enabled: true
+    category: bios
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+
+  - name: get_bios_pending_settings
+    description: Get pending BIOS settings that will be applied on next reboot
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/Bios/Settings
+    enabled: true
+    category: bios
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+
+  # =============================================================================
+  # Hardware Inventory Tools
+  # =============================================================================
+
+  - name: get_memory_info
+    description: Get information about installed memory modules
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/Memory
+    enabled: true
+    category: hardware
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+
+  - name: get_memory_module_details
+    description: Get detailed information about a specific memory module
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/Memory/{MemoryId}
+    enabled: true
+    category: hardware
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+      - tool_param_name: memory_id
+        api_param_name: MemoryId
+        location: path
+        description: The ID of the memory module (e.g., 'DIMM.Socket.A1')
+        required: true
+
+  - name: get_processor_info
+    description: Get information about installed processors (CPUs)
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/Processors
+    enabled: true
+    category: hardware
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+
+  - name: get_storage_info
+    description: Get information about storage controllers and drives
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/Storage
+    enabled: true
+    category: hardware
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+
+  - name: get_network_interfaces
+    description: Get information about network interfaces
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/NetworkInterfaces
+    enabled: true
+    category: hardware
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+
+  - name: get_ethernet_interfaces
+    description: Get information about system network interfaces
+    operation_id: GET_/redfish/v1/Systems/{ComputerSystemId}/EthernetInterfaces
+    enabled: true
+    category: hardware
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+
+  # =============================================================================
+  # Power and Reset Control Tools
+  # =============================================================================
+
+  - name: reset_system
+    description: Perform a reset operation on the system (power on, off, reboot, etc.)
+    operation_id: Action_Reset_/redfish/v1/Systems/{ComputerSystemId}/Actions/ComputerSystem.Reset
+    enabled: true
+    category: power_control
+    parameter_mappings:
+      - tool_param_name: system_id
+        api_param_name: ComputerSystemId
+        location: path
+        description: The ID of the computer system
+        required: true
+        default: "System.Embedded.1"
+      - tool_param_name: reset_type
+        api_param_name: ResetType
+        location: body
+        description: "Type of reset (On, ForceOff, GracefulShutdown, GracefulRestart, ForceRestart, Nmi, PushPowerButton)"
+        required: true
+
+  - name: reset_manager
+    description: Reset the management controller (iDRAC)
+    operation_id: Action_Reset_/redfish/v1/Managers/{ManagerId}/Actions/Manager.Reset
+    enabled: true
+    category: power_control
+    parameter_mappings:
+      - tool_param_name: manager_id
+        api_param_name: ManagerId
+        location: path
+        description: The ID of the manager (e.g., 'iDRAC.Embedded.1')
+        required: true
+        default: "iDRAC.Embedded.1"
+      - tool_param_name: reset_type
+        api_param_name: ResetType
+        location: body
+        description: "Type of reset (GracefulRestart, ForceRestart)"
+        required: true
+
+  # =============================================================================
+  # Account Management Tools
+  # =============================================================================
+
+  - name: list_user_accounts
+    description: List all user accounts configured on the iDRAC
+    operation_id: GET_/redfish/v1/AccountService/Accounts
+    enabled: true
+    category: account_management
+    parameter_mappings: []
+
+  - name: get_account_service
+    description: Get account service configuration including password policies
+    operation_id: GET_/redfish/v1/AccountService
+    enabled: true
+    category: account_management
+    parameter_mappings: []
+
+  - name: create_user_account
+    description: Create a new user account on the iDRAC
+    operation_id: POST_/redfish/v1/AccountService/Accounts
+    enabled: true
+    category: account_management
+    parameter_mappings:
+      - tool_param_name: new_username
+        api_param_name: UserName
+        location: body
+        description: Username for the new account
+        required: true
+      - tool_param_name: new_password
+        api_param_name: Password
+        location: body
+        description: Password for the new account
+        required: true
+      - tool_param_name: role_id
+        api_param_name: RoleId
+        location: body
+        description: Role for the user (Administrator, Operator, ReadOnly)
+        required: true
+        default: "ReadOnly"
+
+  - name: delete_user_account
+    description: Delete a user account from the iDRAC
+    operation_id: DELETE_/redfish/v1/AccountService/Accounts/{ManagerAccountId}
+    enabled: true
+    category: account_management
+    parameter_mappings:
+      - tool_param_name: account_id
+        api_param_name: ManagerAccountId
+        location: path
+        description: The ID of the account to delete
+        required: true
+
+  # =============================================================================
+  # Manager (iDRAC) Information Tools
+  # =============================================================================
+
+  - name: get_manager_info
+    description: Get information about the iDRAC management controller
+    operation_id: GET_/redfish/v1/Managers/{ManagerId}
+    enabled: true
+    category: manager_info
+    parameter_mappings:
+      - tool_param_name: manager_id
+        api_param_name: ManagerId
+        location: path
+        description: The ID of the manager
+        required: true
+        default: "iDRAC.Embedded.1"
+
+  - name: list_managers
+    description: List all managers (management controllers)
+    operation_id: GET_/redfish/v1/Managers
+    enabled: true
+    category: manager_info
+    parameter_mappings: []
+
+  # =============================================================================
+  # Service Root
+  # =============================================================================
+
+  - name: get_service_root
+    description: Get the Redfish service root, showing available API endpoints
+    operation_id: GET_/redfish/v1
+    enabled: true
+    category: service
+    parameter_mappings: []
+
+  # =============================================================================
+  # Log and Event Tools
+  # =============================================================================
+
+  - name: get_system_event_log
+    description: Get system event log entries from the iDRAC
+    operation_id: GET_/redfish/v1/Managers/{ManagerId}/LogServices/Sel/Entries
+    enabled: true
+    category: logs
+    parameter_mappings:
+      - tool_param_name: manager_id
+        api_param_name: ManagerId
+        location: path
+        description: The ID of the manager (e.g., 'iDRAC.Embedded.1')
+        required: true
+        default: "iDRAC.Embedded.1"
+
+  # =============================================================================
+  # Update Service Tools
+  # =============================================================================
+
+  - name: get_update_service
+    description: Get firmware update service information and firmware inventory
+    operation_id: GET_/redfish/v1/UpdateService
+    enabled: true
+    category: firmware
+    parameter_mappings: []

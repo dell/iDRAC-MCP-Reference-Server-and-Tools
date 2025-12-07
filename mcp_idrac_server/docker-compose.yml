@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mcp-idrac-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mcp-idrac-server:latest
+    container_name: mcp-idrac-server
+
+    # Environment variables (can be overridden)
+    environment:
+      - OPENAPI_FILE=/app/config/openapi.yaml
+      - TOOLS_CONFIG_FILE=/app/config/tools.yaml
+      - PYTHONUNBUFFERED=1
+
+    # Volume mounts for configuration files
+    # Mount your local config directory to allow runtime configuration changes
+    volumes:
+      - ./config:/app/config:ro  # Mount config as read-only
+      # Uncomment to mount custom configs from a different location:
+      # - /path/to/your/config:/app/config:ro
+
+    # Network configuration
+    # Expose streamable-http transport port
+    ports:
+      - "8000:8000"
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Graceful shutdown settings
+    stop_signal: SIGTERM
+    stop_grace_period: 10s
+
+    # Resource limits (adjust as needed)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Use host network to allow iDRAC connectivity
+    # Uncomment if you need to access iDRAC on the host network
+    # network_mode: host
+
+# Optional: Create a custom network for better isolation
+networks:
+  default:
+    name: mcp-network
+    driver: bridge

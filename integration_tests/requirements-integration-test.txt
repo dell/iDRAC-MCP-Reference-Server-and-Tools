@@ -1,0 +1,14 @@
+# Integration Test Dependencies
+# Install with: pip install -r requirements-integration-test.txt
+
+# Testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# HTTP testing
+requests>=2.31.0
+
+# Also install main dependencies
+-r ../mcp_idrac_server/requirements.txt
+-r ../mcp_client_examples/requirements.txt
