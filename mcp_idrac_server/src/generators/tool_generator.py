@@ -175,7 +175,8 @@ class ToolGenerator:
                     "Authentication required. Provide either:\n"
                     "  - 'auth_token' for Token Authentication, OR\n"
                     "  - 'username' AND 'password' for Basic Authentication, OR\n"
-                    "  - set 'IDRAC_ALLOW_ENV_CREDENTIALS=true' with both 'IDRAC_USERNAME' and 'IDRAC_PASSWORD'"
+                    "  - set 'IDRAC_ALLOW_ENV_CREDENTIALS=true' with both "
+                    "'IDRAC_USERNAME' and 'IDRAC_PASSWORD'"
                 )
 
             # Map tool parameters to API parameters
