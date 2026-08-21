@@ -18,6 +18,7 @@
 from typing import Dict, Any, List, Callable, Optional, Tuple, Annotated
 from functools import wraps
 import inspect
+import os
 
 from ..models.tool_definition import ToolDefinition, ParameterMapping
 from ..models.api_operation import ApiOperation, ParameterLocation
@@ -150,6 +151,17 @@ class ToolGenerator:
             password = arguments.get('password')
             auth_token = arguments.get('auth_token')
 
+            # Environment-based credentials are an optional fallback. They are used
+            # only when the request supplies neither a username nor a password.
+            allow_env_credentials = os.getenv(
+                "IDRAC_ALLOW_ENV_CREDENTIALS",
+                "false"
+            ).strip().lower() == "true"
+
+            if allow_env_credentials and not username and not password:
+                username = os.getenv("IDRAC_USERNAME")
+                password = os.getenv("IDRAC_PASSWORD")
+
             # Validate authentication parameters based on auth method
             if auth_token:
                 # Token Auth: only auth_token is required
@@ -162,7 +174,8 @@ class ToolGenerator:
                 raise ValueError(
                     "Authentication required. Provide either:\n"
                     "  - 'auth_token' for Token Authentication, OR\n"
-                    "  - 'username' AND 'password' for Basic Authentication"
+                    "  - 'username' AND 'password' for Basic Authentication, OR\n"
+                    "  - set 'IDRAC_ALLOW_ENV_CREDENTIALS=true' with both 'IDRAC_USERNAME' and 'IDRAC_PASSWORD'"
                 )
 
             # Map tool parameters to API parameters
